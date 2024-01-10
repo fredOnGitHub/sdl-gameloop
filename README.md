@@ -1,1 +1,1 @@
-# Compile with WITH_PADDLE option to get the paddle
+# Compile with WITH_PADDLE option to interact with the game
