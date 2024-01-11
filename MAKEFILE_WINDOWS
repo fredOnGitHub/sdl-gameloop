@@ -1,0 +1,22 @@
+CC=gcc
+CFLAGS=-Wall -std=c18
+LDFLAGS=-Lsdl2/lib -lmingw32 -lSDL2main -lSDL2
+EXEC=game
+all: $(EXEC)
+
+game: main.o
+	$(CC) -o $@ $< $(LDFLAGS)
+
+main.o:	src/main.c	src/constants.h
+	$(CC) -o $@ -c $< $(CFLAGS) $(INCLUDE)
+
+run:
+	./game 
+
+clean:
+	del "*.o" "game.exe"
+
+# # USUAL COMMANDS
+# cls;mingw32-make.exe
+# cls;mingw32-make.exe clean
+# cls;mingw32-make.exe run
