@@ -60,10 +60,7 @@ int initialize_window(void)
         fprintf(stderr, "Error creating SDL Window.\n");
         return false;
     }
-
-    // renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    // https://wiki.libsdl.org/SDL2/SDL_CreateRenderer
-    renderer = SDL_CreateRenderer(window, -1, 0);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
     if (!renderer)
     {
         fprintf(stderr, "Error creating SDL Renderer.\n");
@@ -80,7 +77,7 @@ void process_input(void)
 {
     SDL_Event event;
     while (SDL_PollEvent(&event))
-    { // https://youtu.be/FwRfH2bA48M?feature=shared&t=399
+    {
         switch (event.type)
         {
         case SDL_QUIT:
@@ -198,7 +195,6 @@ void update(void)
 void render(void)
 {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    // SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
 
     SDL_RenderClear(renderer);
 
@@ -278,6 +274,8 @@ void get_frame_per_sec(frames_ *frames)
         frames->last_ticks = get_ticks;
         float frame_per_sec = (float)frames->n / (get_ticks - frames->get_ticks_init) * 1000.0;
         printf("frame_per_sec %f\n", frame_per_sec);
+        delta_time = (SDL_GetTicks() - last_frame_time) / 1000.0;
+        printf("delta_time %f\n", delta_time);
     }
 }
 
@@ -301,7 +299,7 @@ int main(int argc, char *args[])
     {
         process_input();
         update();
-        delay_1();
+        delay_2();
         render();
         get_frame_per_sec(&frames);
     }
@@ -310,21 +308,31 @@ int main(int argc, char *args[])
 
     return 0;
 }
-// void test_type_mac(void);
 
-// void test_type_mingw64(void);
-// FROM
-// https://github.com/gustavopezzi/sdl-gameloop
+// Modified file FROM https://github.com/gustavopezzi/sdl-gameloop
 
-// COMPILE
+
+// COMPILE WITH COMMAND LINE
 // win
-// gcc -std=c17 main.c -Isdl2\include\SDL2 -Lsdl2\lib -Wall -lmingw32 -lSDL2main -lSDL2 -o main
+// gcc -std=c18 main.c -Isdl2\include\SDL2 -Lsdl2\lib -Wall -lmingw32 -lSDL2main -lSDL2 -o main
 // mac (brew install SDL2)
 // clear; rm main; gcc -std=c18 main_mac_v2.c -lSDL2 -o main; ./main
+
+
+// COMPIL WITH SCONS
+// cls;scons -Q;.\game.exe
+
 
 // SEARCH A FILE IN WIN
 // Get-ChildItem -Path C:\mingw64 -Filter *libmingw32* -Recurse -ErrorAction SilentlyContinue -Force | %{$_.FullName}
 // Get-ChildItem -Path .\sdl2 -Filter *libsdl2* -Recurse -ErrorAction SilentlyContinue -Force | %{$_.FullName}
 
-// SCONS
-// cls;scons -Q;.\game.exe
+
+// BLOCKING WAIT
+// while (!SDL_TICKS_PASSED(SDL_GetTicks(), last_frame_time + FRAME_TARGET_TIME))
+//     ;
+// // Get a delta time factor converted to seconds to be used to update my objects
+// float delta_time = (SDL_GetTicks() - last_frame_time) / 1000.0;
+
+
+
