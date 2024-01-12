@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 // #include <SDL.h>
-#include "sdl2\include\SDL2\SDL.h"
+#include "../sdl2\include\SDL2\SDL.h"
 #include "./constants.h"
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Global variables
@@ -12,7 +11,7 @@ int game_is_running = false;
 int last_frame_time = 0;
 SDL_Window *window = NULL;
 SDL_Renderer *renderer = NULL;
-const float FRAME_TARGET_TIME = 1000.0 / FPS;
+const int FRAME_TARGET_TIME = 1000 / FPS;
 const float PADDLE_VEL_X = 10.0 * 60.0 / FPS;
 struct struct_frames
 {
@@ -60,7 +59,11 @@ int initialize_window(void)
         fprintf(stderr, "Error creating SDL Window.\n");
         return false;
     }
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
+#ifdef VSYNC_AND_HARD_ACCELERATED
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+#else
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
+#endif
     if (!renderer)
     {
         fprintf(stderr, "Error creating SDL Renderer.\n");
@@ -68,7 +71,6 @@ int initialize_window(void)
     }
     return true;
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Function to poll SDL events and process keyboard input
@@ -234,29 +236,36 @@ void destroy_window(void)
 ///////////////////////////////////////////////////////////////////////////////
 // It is non blocking with a desired FPS
 ///////////////////////////////////////////////////////////////////////////////
-void delay_1()
+const int M = 16;
+void delay_1() // https://www.youtube.com/watch?v=C4uUeRlpAhY
 {
-    int u = SDL_GetTicks() - last_frame_time;
+    int elapsed_time = SDL_GetTicks() - last_frame_time;
     // printf("u %d\n", u);
-    int time_to_wait = FRAME_TARGET_TIME - (u);
-    if (time_to_wait > 0 && time_to_wait <= FRAME_TARGET_TIME)
+    if (elapsed_time < M) // 16.66 = 1000 ms / (60 fps)
     {
-        SDL_Delay(time_to_wait);
-        // printf("yes time_to_wait %d\n", time_to_wait);
-    }
-    else
-    {
-        // printf("time_to_wait %d\n", time_to_wait);
-        // puts("no");
+        SDL_Delay(M - elapsed_time);
+        // printf("yes %d\n", 16 - elapsed_time);
     }
     delta_time = (SDL_GetTicks() - last_frame_time) / 1000.0;
     last_frame_time = SDL_GetTicks();
 }
 
+void delay_2() // https://www.youtube.com/watch?v=C4uUeRlpAhY
+{
+    int elapsed_time = SDL_GetTicks() - last_frame_time;
+    // printf("u %d\n", u);
+    if (elapsed_time < FRAME_TARGET_TIME) // 16.66 = 1000 ms / (60 fps)
+    {
+        SDL_Delay(FRAME_TARGET_TIME - elapsed_time);
+        // printf("yes %d\n", 16 - elapsed_time);
+    }
+    delta_time = (SDL_GetTicks() - last_frame_time) / 1000.0;
+    last_frame_time = SDL_GetTicks();
+}
 ///////////////////////////////////////////////////////////////////////////////
 // Get the max from the machine
 ///////////////////////////////////////////////////////////////////////////////
-void delay_2()
+void delay_SDL_RENDERER_PRESENTVSYNC() // SDL_RENDERER_PRESENTVSYNC
 {
     // Get delta_time factor converted to seconds to be used to update objects
     delta_time = (SDL_GetTicks() - last_frame_time) / 1000.0;
@@ -279,7 +288,6 @@ void get_frame_per_sec(frames_ *frames)
     }
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////
 // Main function
 ///////////////////////////////////////////////////////////////////////////////
@@ -288,18 +296,24 @@ int main(int argc, char *args[])
     frames_ frames = {0, 0, 0};
     frames.get_ticks_init = SDL_GetTicks();
     printf("%ld %d\n", frames.n, frames.get_ticks_init);
-    printf("FRAME_TARGET_TIME %f\n", FRAME_TARGET_TIME);
+    printf("FRAME_TARGET_TIME %d\n", FRAME_TARGET_TIME);
     // exit(0);
 
     game_is_running = initialize_window();
 
     setup();
 
+    last_frame_time = SDL_GetTicks();
+
     while (game_is_running)
     {
         process_input();
         update();
+#ifdef VSYNC_AND_HARD_ACCELERATED
+        delay_SDL_RENDERER_PRESENTVSYNC();
+#else
         delay_2();
+#endif
         render();
         get_frame_per_sec(&frames);
     }
@@ -311,28 +325,21 @@ int main(int argc, char *args[])
 
 // Modified file FROM https://github.com/gustavopezzi/sdl-gameloop
 
-
 // COMPILE WITH COMMAND LINE
 // win
 // gcc -std=c18 main.c -Isdl2\include\SDL2 -Lsdl2\lib -Wall -lmingw32 -lSDL2main -lSDL2 -o main
 // mac (brew install SDL2)
 // clear; rm main; gcc -std=c18 main_mac_v2.c -lSDL2 -o main; ./main
 
-
 // COMPIL WITH SCONS
 // cls;scons -Q;.\game.exe
-
 
 // SEARCH A FILE IN WIN
 // Get-ChildItem -Path C:\mingw64 -Filter *libmingw32* -Recurse -ErrorAction SilentlyContinue -Force | %{$_.FullName}
 // Get-ChildItem -Path .\sdl2 -Filter *libsdl2* -Recurse -ErrorAction SilentlyContinue -Force | %{$_.FullName}
-
 
 // BLOCKING WAIT
 // while (!SDL_TICKS_PASSED(SDL_GetTicks(), last_frame_time + FRAME_TARGET_TIME))
 //     ;
 // // Get a delta time factor converted to seconds to be used to update my objects
 // float delta_time = (SDL_GetTicks() - last_frame_time) / 1000.0;
-
-
-
