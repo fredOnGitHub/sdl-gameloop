@@ -6,6 +6,6 @@
 
 #define FPS 60
 
-// #define WITH_PADDLE
-
+#define WITH_PADDLE
+#define VSYNC_AND_HARD_ACCELERATED
 #endif
