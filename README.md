@@ -7,7 +7,7 @@ https://github.com/libsdl-org/SDL/releases/tag/release-2.28.5 ->  SDL2-devel-2.2
 # Install SDL2 on mac with brew
 
 # Chose playing with paddle or see infinite game
-Compile with WITH_PADDLE option to interact with the game
+Compile with WITH_PADDLE option from contants.h to interact with the game
 
 # Sync automatically with the screen parameter
 SDL_RENDERER_PRESENTVSYNC option from contants.h to make a fluid game
